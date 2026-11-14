@@ -1,0 +1,29 @@
+{
+  "ananya-sen": {
+    "name": "Ananya Sen",
+    "unit": "A-101",
+    "tower": "A",
+    "carpet_area_sq_ft": 1040,
+    "total_consideration_inr": 6240000,
+    "booking_date": "2025-04-12",
+    "instalments_paid": ["booking (10%)", "structure (40%)"]
+  },
+  "rohit-mehra": {
+    "name": "Rohit Mehra",
+    "unit": "B-204",
+    "tower": "B",
+    "carpet_area_sq_ft": 1215,
+    "total_consideration_inr": 7410000,
+    "booking_date": "2025-06-03",
+    "instalments_paid": ["booking (10%)"]
+  },
+  "farhan-qureshi": {
+    "name": "Farhan Qureshi",
+    "unit": "C-307",
+    "tower": "C",
+    "carpet_area_sq_ft": 980,
+    "total_consideration_inr": 5880000,
+    "booking_date": "2025-09-21",
+    "instalments_paid": ["booking (10%)", "structure (40%)"]
+  }
+}
