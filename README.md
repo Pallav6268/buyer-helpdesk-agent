@@ -7,7 +7,7 @@ and remembers each buyer across chats.
 
 Week 2 of my public AI-agent portfolio. Week 1: [Clause Deviation Agent](https://github.com/Pallav6268/clause-deviation-agent).
 
-> **Live demo:** https://buyer-helpdesk-agent.streamlit.app
+> **Live demo:** https://rera-buyer-agent.streamlit.app
 
 ![CI](https://github.com/Pallav6268/buyer-helpdesk-agent/actions/workflows/ci.yml/badge.svg)
 
