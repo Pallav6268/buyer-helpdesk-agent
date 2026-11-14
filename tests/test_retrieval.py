@@ -1,7 +1,7 @@
 import json
 
-from agent.documents import DATA_DIR, load_project_docs, load_rera, rera_section_text, split_section
-from agent.retrieval import tokenize
+from agent.documents import DATA_DIR, Passage, load_all, load_project_docs, load_rera, rera_section_text, split_section
+from agent.retrieval import corpus_fingerprint, load_vectors, tokenize
 
 
 def test_project_docs_become_citable_passages():
@@ -57,3 +57,17 @@ def test_search_finds_the_right_rera_sections(retriever):
         == "rera-13"
     )
     assert "rera-31" in [p.id for p in retriever.search("filing of complaints with the Authority", source="rera", k=3)]
+
+
+def test_precomputed_embeddings_match_the_documents():
+    # Fails if a document changed without re-running scripts/build_embeddings.py.
+    passages = load_all()
+    vectors = load_vectors(passages)
+    assert vectors is not None, "data/embeddings.npz is stale: run python scripts/build_embeddings.py"
+    assert vectors.shape == (len(passages), 384)
+
+
+def test_fingerprint_changes_with_the_text():
+    passages = load_project_docs()
+    edited = [Passage(p.id, p.source, p.title, p.text + " edited") if i == 0 else p for i, p in enumerate(passages)]
+    assert corpus_fingerprint(passages) != corpus_fingerprint(edited)

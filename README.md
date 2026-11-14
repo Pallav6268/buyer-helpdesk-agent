@@ -35,6 +35,10 @@ flowchart LR
 1. **Route.** The agent picks the source: project documents, the Act, or both.
 2. **Hybrid search.** BM25 keywords plus `bge-small-en-v1.5` embeddings (via fastembed), fused
    with reciprocal rank fusion. Keywords catch "Section 18"; embeddings catch "get my money back" ≈ "refund".
+   Passage vectors are precomputed (`scripts/build_embeddings.py`, `data/embeddings.npz`), so the app
+   only embeds the question at runtime. Embedding all 176 passages in one batch at startup peaked at
+   about 4 GB of memory and got the free hosting container killed; with precomputed vectors the app
+   starts in under a second at about 0.35 GB. A test fails if the vectors go stale.
 3. **Grade.** A second LLM call keeps only the passages that help with the buyer's question.
    The rest are dropped and listed in the trace.
 4. **Rewrite.** If nothing survives grading, the tool tells the agent to rewrite the query and

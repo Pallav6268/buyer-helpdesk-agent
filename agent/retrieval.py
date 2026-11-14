@@ -7,14 +7,18 @@ BM25 alone and says so in ``mode``.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from collections.abc import Sequence
+from pathlib import Path
 
 from rank_bm25 import BM25Okapi
 
 from .documents import Passage
 
 EMBED_MODEL = "BAAI/bge-small-en-v1.5"
+EMBED_BATCH = 8  # small batches keep peak memory near 0.5 GB (one batch of 176 needed ~4 GB)
+VECTORS_FILE = Path(__file__).resolve().parent.parent / "data" / "embeddings.npz"
 RRF_K = 60  # standard RRF constant: score = sum(1 / (RRF_K + rank))
 CANDIDATES = 20  # how many hits each method contributes before fusion
 
@@ -22,6 +26,30 @@ STOPWORDS = set(
     "a an and are as at be by can do does for from has have how i if in is it its my of on or "
     "the their there this to was what when where which who will with would you your me we".split()
 )
+
+
+def passage_text(p: Passage) -> str:
+    return f"{p.title}. {p.text}"
+
+
+def corpus_fingerprint(passages: Sequence[Passage]) -> str:
+    """Changes whenever any passage ID, title or text changes."""
+    digest = hashlib.sha256()
+    for p in passages:
+        digest.update(f"{p.id}\x1f{passage_text(p)}\x1e".encode())
+    return digest.hexdigest()[:16]
+
+
+def load_vectors(passages: Sequence[Passage], path: Path = VECTORS_FILE):
+    """Precomputed passage vectors, if they were built for exactly these passages and this model."""
+    import numpy as np
+
+    if not path.exists():
+        return None
+    data = np.load(path)
+    if str(data["model"]) != EMBED_MODEL or str(data["fingerprint"]) != corpus_fingerprint(passages):
+        return None
+    return data["vectors"]
 
 
 def tokenize(text: str) -> list[str]:
@@ -42,9 +70,11 @@ class HybridRetriever:
                 import numpy as np
                 from fastembed import TextEmbedding
 
-                self.embedder = TextEmbedding(EMBED_MODEL)
-                docs = [f"{p.title}. {p.text}" for p in self.passages]
-                self.vectors = np.array(list(self.embedder.embed(docs)))
+                self.embedder = TextEmbedding(EMBED_MODEL, threads=1)
+                self.vectors = load_vectors(self.passages)
+                if self.vectors is None:  # documents changed since scripts/build_embeddings.py ran
+                    docs = [passage_text(p) for p in self.passages]
+                    self.vectors = np.array(list(self.embedder.embed(docs, batch_size=EMBED_BATCH)))
                 self.mode = "hybrid (keywords + embeddings)"
             except Exception as exc:  # no network or model: keyword search still works
                 self.embedder = None
