@@ -151,9 +151,8 @@ with st.sidebar:
     if not facts:
         st.caption("Nothing yet. Tell me something lasting, e.g. *“I'm taking a home loan.”*")
     for f in facts:
-        c1, c2 = st.columns([6, 1])
-        c1.caption(f"• {f['fact']}")
-        if c2.button("✕", key=f"forget-{f['id']}", help="Forget this"):
+        st.caption(f"• {f['fact']}")
+        if st.button("Forget this", key=f"forget-{f['id']}", type="tertiary", icon=":material/delete:"):
             memory.delete(buyer_id, f["id"])
             st.rerun()
     if facts and st.button("Forget everything about me"):
@@ -213,13 +212,17 @@ for entry in history:
         if entry["role"] == "assistant":
             render_extras(entry)
 
-pending = None
-if not history:
+
+def ask(example: str) -> None:
+    st.session_state["pending"] = example
+
+
+pending = st.session_state.pop("pending", None)
+if not history and not pending:
     st.caption("Try one of these:")
     cols = st.columns(len(EXAMPLES))
-    for col, example in zip(cols, EXAMPLES, strict=True):
-        if col.button(example, use_container_width=True):
-            pending = example
+    for i, (col, example) in enumerate(zip(cols, EXAMPLES, strict=True)):
+        col.button(example, key=f"example-{i}", use_container_width=True, on_click=ask, args=(example,))
 if history and st.button("Clear this chat"):
     history.clear()
     st.rerun()
